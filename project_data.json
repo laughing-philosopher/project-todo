@@ -1,0 +1,97 @@
+[
+    {
+        "id": "section1",
+        "name": "Section 1: Project Initiation & Planning",
+        "subpoints": [
+            {
+                "text": "Define project scope and objectives",
+                "completed": false
+            },
+            {
+                "text": "Identify key stakeholders and roles",
+                "completed": false
+            },
+            {
+                "text": "Develop initial project timeline and budget",
+                "completed": false
+            }
+        ],
+        "progress": 0
+    },
+    {
+        "id": "section2",
+        "name": "Section 2: Requirement Gathering & Analysis",
+        "subpoints": [
+            {
+                "text": "Conduct stakeholder interviews",
+                "completed": false
+            },
+            {
+                "text": "Document functional and non-functional requirements",
+                "completed": false
+            },
+            {
+                "text": "Analyze and prioritize requirements",
+                "completed": false
+            }
+        ],
+        "progress": 0
+    },
+    {
+        "id": "section3",
+        "name": "Section 3: Design & Prototyping",
+        "subpoints": [
+            {
+                "text": "Create wireframes and mockups",
+                "completed": false
+            },
+            {
+                "text": "Develop database schema and system architecture",
+                "completed": false
+            },
+            {
+                "text": "Build and test interactive prototypes",
+                "completed": false
+            }
+        ],
+        "progress": 0
+    },
+    {
+        "id": "section4",
+        "name": "Section 4: Development & Implementation",
+        "subpoints": [
+            {
+                "text": "Set up development environment",
+                "completed": false
+            },
+            {
+                "text": "Code and unit test modules/features",
+                "completed": false
+            },
+            {
+                "text": "Integrate components and perform system testing",
+                "completed": false
+            }
+        ],
+        "progress": 0
+    },
+    {
+        "id": "section5",
+        "name": "Section 5: Testing, Deployment & Review",
+        "subpoints": [
+            {
+                "text": "Conduct User Acceptance Testing (UAT)",
+                "completed": false
+            },
+            {
+                "text": "Prepare deployment plan and deploy to production",
+                "completed": false
+            },
+            {
+                "text": "Post-implementation review and lessons learned",
+                "completed": false
+            }
+        ],
+        "progress": 0
+    }
+]

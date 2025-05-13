@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Progress Tracker</title>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <link
+        href="[https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap)"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #3b82f6;
+            cursor: pointer;
+            border-radius: 50%;
+            margin-top: -6px;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #3b82f6;
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+        }
+
+        input[type="range"] {
+            height: 8px;
+            border-radius: 4px;
+            background: #e5e7eb;
+            outline: none;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #3b82f6;
+            border-radius: 4px;
+            transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+        }
+
+        .progress-bar-container {
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .task-label.line-through {
+            text-decoration: line-through;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800 py-8 px-4 md:px-8">
+
+    <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-lg p-6 md:p-8">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-blue-600">Project Progress Tracker</h1>
+            <p class="text-gray-600 mt-2">Monitor the completion status of your project sections.</p>
+        </header>
+
+        <div class="space-y-8">
+            {% for section in sections %}
+            <section id="{{ section.id }}"
+                class="bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                    <h2 class="text-xl md:text-2xl font-semibold text-blue-700">{{ section.name }}</h2>
+                    <span id="{{ section.id }}-progress-value" class="text-lg font-medium text-blue-600 mt-2 sm:mt-0">
+                        {{ section.progress }}%
+                    </span>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="text-md font-medium text-gray-700 mb-3">Tasks:</h3>
+                    <ul class="space-y-2">
+                        {% for point in section.subpoints %}
+                        <li class="task-item flex items-center py-1">
+                            <input type="checkbox" id="{{ section.id }}-task-{{ loop.index0 }}"
+                                class="task-checkbox h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-offset-1 focus:ring-2 mr-3 cursor-pointer"
+                                data-section-id="{{ section.id }}" data-task-index="{{ loop.index0 }}" {% if
+                                point.completed %}checked{% endif %}>
+                            <label for="{{ section.id }}-task-{{ loop.index0 }}"
+                                class="task-label text-gray-700 cursor-pointer select-none {% if point.completed %}line-through{% endif %}">
+                                {{ point.text }}
+                            </label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="progress-bar-container w-full mb-2">
+                    <div id="{{ section.id }}-progress-bar" class="progress-bar-fill"
+                        style="width: {{ section.progress }}%;"></div>
+                </div>
+
+                <input type="range" min="0" max="100" value="{{ section.progress }}" class="w-full"
+                    id="{{ section.id }}-slider" aria-labelledby="{{ section.id }}-label">
+                <label id="{{ section.id }}-label" class="sr-only">Progress for {{ section.name }}</label>
+            </section>
+            {% endfor %}
+        </div>
+
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>&copy; <span id="currentYear"></span> Your Project Tracker. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const flaskSectionsData = {{ sections| tojson | safe
+        }}; // Data from Flask
+
+        flaskSectionsData.forEach(sectionData => {
+            const sectionId = sectionData.id;
+            const slider = document.getElementById(`${sectionId}-slider`);
+            const progressValueDisplay = document.getElementById(`${sectionId}-progress-value`);
+            const progressBarFill = document.getElementById(`${sectionId}-progress-bar`);
+            const taskCheckboxes = document.querySelectorAll(`.task-checkbox[data-section-id="${sectionId}"]`);
+
+            // Function to update all relevant UI elements for a section
+            function updateSectionUI(currentProgress) {
+                if (!slider || !progressValueDisplay || !progressBarFill) return;
+
+                // Update progress percentage text
+                progressValueDisplay.textContent = `${currentProgress}%`;
+                // Update progress bar fill width
+                progressBarFill.style.width = `${currentProgress}%`;
+                // Update slider's visual position
+                slider.value = currentProgress;
+
+                // Change progress bar color: green for 100%, blue otherwise
+                if (currentProgress === 100) {
+                    progressBarFill.classList.remove('bg-blue-500');
+                    progressBarFill.classList.add('bg-green-500');
+                } else {
+                    progressBarFill.classList.remove('bg-green-500');
+                    progressBarFill.classList.add('bg-blue-500');
+                }
+            }
+
+            // Function to synchronize checkbox states and their label styles
+            function syncCheckboxesAndStyles(sId, tasksData) {
+                const checkboxesInSection = document.querySelectorAll(`.task-checkbox[data-section-id="${sId}"]`);
+                checkboxesInSection.forEach((cb, index) => {
+                    const task = tasksData[index];
+                    if (task) {
+                        cb.checked = task.completed; // Set checkbox checked state
+                        const label = document.querySelector(`label[for="${cb.id}"]`);
+                        if (label) {
+                            // Apply or remove line-through style based on task completion
+                            label.classList.toggle('line-through', task.completed);
+                        }
+                    }
+                });
+            }
+
+            // Initial UI setup for the section based on data from Flask
+            updateSectionUI(sectionData.progress);
+            // Also, ensure checkboxes and their styles are correctly set on page load
+            syncCheckboxesAndStyles(sectionId, sectionData.subpoints);
+
+            // Event listener for Checkboxes
+            taskCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', async function () {
+                    const taskIndex = parseInt(this.dataset.taskIndex);
+                    const isChecked = this.checked; // Will be true if checked, false if unchecked
+                    const label = document.querySelector(`label[for="${this.id}"]`);
+
+                    // Immediately update the text style (strikethrough)
+                    if (label) {
+                        // If 'isChecked' is false (unchecked), 'line-through' class is removed.
+                        // If 'isChecked' is true (checked), 'line-through' class is added.
+                        label.classList.toggle('line-through', isChecked);
+                    }
+
+                    try {
+                        // Send update to the server
+                        const response = await fetch('/api/update_task_status', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ sectionId, taskIndex, isChecked })
+                        });
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                        const result = await response.json();
+                        if (result.success) {
+                            // Server confirms, update the section's progress UI (slider, text, bar)
+                            updateSectionUI(result.newProgress);
+                            // If server sends back updated subpoints, re-sync them (optional, but good for consistency)
+                            if (result.updatedSubpoints) {
+                                syncCheckboxesAndStyles(sectionId, result.updatedSubpoints);
+                            }
+                        } else {
+                            console.error("Failed to update task on server:", result.error);
+                            // Revert UI change if server update fails
+                            this.checked = !isChecked; // Revert checkbox state
+                            if (label) label.classList.toggle('line-through', this.checked); // Revert label style
+                        }
+                    } catch (error) {
+                        console.error('Error sending task update:', error);
+                        // Revert UI change on network error etc.
+                        this.checked = !isChecked; // Revert checkbox state
+                        if (label) label.classList.toggle('line-through', this.checked); // Revert label style
+                    }
+                });
+            });
+
+            // Event listener for Slider
+            if (slider) {
+                slider.addEventListener('input', async function () {
+                    const newProgress = parseInt(this.value);
+                    // Immediately update section UI (progress text, bar color/width) for responsiveness
+                    updateSectionUI(newProgress);
+
+                    // Optimistically update checkboxes based on slider position for immediate visual feedback
+                    const totalTasks = taskCheckboxes.length;
+                    if (totalTasks > 0) {
+                        const tasksToComplete = Math.round((newProgress / 100) * totalTasks);
+                        taskCheckboxes.forEach((cb, index) => {
+                            const shouldBeChecked = index < tasksToComplete;
+                            cb.checked = shouldBeChecked;
+                            const lbl = document.querySelector(`label[for="${cb.id}"]`);
+                            if (lbl) {
+                                lbl.classList.toggle('line-through', shouldBeChecked);
+                            }
+                        });
+                    }
+
+                    // Send the new progress to the server
+                    try {
+                        const response = await fetch('/api/update_section_progress', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ sectionId, newProgress })
+                        });
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        const result = await response.json();
+                        if (result.success && result.updatedTasks) {
+                            // Server confirms and returns the canonical state of tasks for this section
+                            // Re-synchronize checkboxes and their styles based on server's response
+                            syncCheckboxesAndStyles(sectionId, result.updatedTasks);
+                            // Ensure section UI (progress %, bar) also reflects the server's final state
+                            // This is important if server logic for distributing progress differs
+                            updateSectionUI(newProgress); // `newProgress` here is what we sent and server accepted
+                        } else {
+                            console.error("Failed to update section progress on server:", result.error);
+                            // Potentially revert slider and checkbox changes if server update fails
+                            // For simplicity, this example doesn't fully revert slider-initiated changes on error,
+                            // but a more robust implementation might.
+                        }
+                    } catch (error) {
+                        console.error('Error sending section progress update:', error);
+                    }
+                });
+            }
+        });
+
+        // Set current year in footer
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+    });
+    </script>
+
+</body>
+
+</html>
